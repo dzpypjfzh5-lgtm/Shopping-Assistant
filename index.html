@@ -99,6 +99,26 @@
       <p class="add__hint" id="addHint" hidden></p>
     </form>
 
+
+    <aside class="install" id="installBanner" hidden>
+      <div class="install__row">
+        <svg class="install__flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg>
+        <div class="install__text">
+          <p class="install__title">Keep Bloom on your Home Screen</p>
+          <p class="install__body" id="installBody"></p>
+        </div>
+      </div>
+      <ol class="install__steps" id="installSteps" hidden>
+        <li>Tap <strong>Share</strong> at the bottom of Safari: the square with an arrow coming out of it.</li>
+        <li>Scroll down the list and tap <strong>Add to Home Screen</strong>.</li>
+        <li>Tap <strong>Add</strong>. Open Bloom from that icon from now on.</li>
+      </ol>
+      <div class="install__actions">
+        <button type="button" class="btn btn--soft" id="installHowBtn" aria-expanded="false" aria-controls="installSteps">Show me how</button>
+        <button type="button" class="btn btn--ghost" id="installLaterBtn">Not now</button>
+      </div>
+    </aside>
+
     <div class="listhead">
       <div class="chips" role="group" aria-label="Sort items">
         <button type="button" class="chip is-on" data-sort="price-desc">$ high &rarr; low</button>

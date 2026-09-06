@@ -1,5 +1,5 @@
 /* Bloom offline shell — supermarkets have terrible signal. */
-var CACHE = 'bloom-v1';
+var CACHE = 'bloom-v2';
 var ASSETS = [
   './',
   './index.html',

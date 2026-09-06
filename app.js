@@ -17,6 +17,7 @@
       budget: 300,
       currency: '$',
       sort: 'price-desc',
+      installDismissedAt: 0,
       current: { id: uid(), startedAt: null, items: [] },
       trips: []
     };
@@ -44,6 +45,7 @@
     base.budget = num(d.budget) > 0 ? num(d.budget) : 300;
     base.currency = typeof d.currency === 'string' && d.currency ? d.currency.slice(0, 3) : '$';
     base.sort = ['price-desc', 'price-asc', 'added', 'name'].indexOf(d.sort) > -1 ? d.sort : 'price-desc';
+    base.installDismissedAt = num(d.installDismissedAt) || 0;
     if (d.current && Array.isArray(d.current.items)) {
       base.current = {
         id: d.current.id || uid(),
@@ -191,6 +193,8 @@
     statLast: $('statLast'), statAvg: $('statAvg'), statTrips: $('statTrips'),
     budgetInput: $('budgetInput'), currencyInput: $('currencyInput'),
     storageMsg: $('storageMsg'), installMsg: $('installMsg'),
+    install: $('installBanner'), installBody: $('installBody'), installSteps: $('installSteps'),
+    installHow: $('installHowBtn'), installLater: $('installLaterBtn'),
     minibar: $('minibar'), miniValue: $('miniValue'), miniLabel: $('miniLabel'), miniFill: $('miniFill'),
     editSheet: $('editSheet'), editForm: $('editForm'), editName: $('editName'),
     editPrice: $('editPrice'), editDelete: $('editDelete'),
@@ -430,6 +434,7 @@
 
   function renderAll(bump) {
     renderCounter(bump);
+    renderInstall();
     renderList();
     renderLastShop();
     renderHistory();
@@ -446,6 +451,7 @@
     save();
     renderCounter(true);
     renderList();
+    renderInstall();
     return item;
   }
 
@@ -662,6 +668,94 @@
     counterOffScreen = false;
     syncMinibar();
   }
+
+  /* ---------------- add to home screen ---------------- */
+
+  var REMIND_AFTER = 5 * 86400000; // a nudge every five days, not every load
+  var nativePrompt = null;
+
+  function isStandalone() {
+    return window.navigator.standalone === true ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  }
+
+  function isIOS() {
+    var ua = navigator.userAgent || '';
+    return /iPad|iPhone|iPod/.test(ua) ||
+      (/Mac/.test(ua) && navigator.maxTouchPoints > 1); // iPadOS pretends to be a Mac
+  }
+
+  function renderInstall() {
+    // Nothing to protect yet, already installed, or waved away recently — stay quiet.
+    var hasData = state.current.items.length > 0 || state.trips.length > 0;
+    var due = Date.now() - (state.installDismissedAt || 0) > REMIND_AFTER;
+    if (isStandalone() || !hasData || !due) { el.install.hidden = true; return; }
+
+    var saved = state.trips.length;
+    var why = 'It works with no signal in the shop, and stops iOS clearing what you have saved.';
+    if (saved) {
+      why = 'Your ' + (saved === 1 ? 'saved shop lives' : saved + ' saved shops live') +
+        ' on this phone and nowhere else. On the Home Screen iOS cannot clear that, ' +
+        'and Bloom works with no signal in the shop.';
+    }
+    el.installBody.textContent = why;
+
+    el.installHow.textContent = nativePrompt ? 'Install' : 'Show me how';
+    if (!nativePrompt && !isIOS() && !el.installSteps.dataset.generic) {
+      // Not Safari on an iPhone, so the Share-sheet wording would be wrong.
+      el.installSteps.dataset.generic = '1';
+      el.installSteps.innerHTML =
+        '<li>Open your browser\'s menu and choose <strong>Install</strong> or <strong>Add to Home Screen</strong>.</li>';
+    }
+    if (el.install.hidden) { // only collapse when the banner is coming back
+      el.installSteps.hidden = true;
+      el.installHow.setAttribute('aria-expanded', 'false');
+    }
+    el.install.hidden = false;
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    nativePrompt = e;
+    renderInstall();
+  });
+
+  window.addEventListener('appinstalled', function () {
+    state.installDismissedAt = Date.now() + 3650 * 86400000; // done; stop asking
+    save();
+    renderInstall();
+  });
+
+  el.installHow.addEventListener('click', function () {
+    if (nativePrompt) {
+      nativePrompt.prompt();
+      nativePrompt.userChoice.then(function (choice) {
+        if (choice && choice.outcome === 'accepted') {
+          state.installDismissedAt = Date.now() + 3650 * 86400000;
+          save();
+        }
+        nativePrompt = null;
+        renderInstall();
+      });
+      return;
+    }
+    var open = el.installSteps.hidden;
+    el.installSteps.hidden = !open;
+    el.installHow.setAttribute('aria-expanded', String(open));
+    el.installHow.textContent = open ? 'Got it' : 'Show me how';
+    if (!open) {
+      state.installDismissedAt = Date.now();
+      save();
+      renderInstall();
+    }
+  });
+
+  el.installLater.addEventListener('click', function () {
+    state.installDismissedAt = Date.now();
+    save();
+    renderInstall();
+    toast('Fine. Nudging you again in a few days.');
+  });
 
   /* ---------------- sticky mini counter ---------------- */
 

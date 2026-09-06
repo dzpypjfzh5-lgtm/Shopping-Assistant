@@ -34,6 +34,13 @@ This is not just a shortcut. It matters for two reasons:
   about seven days of not visiting. A home-screen app is exempt. If you only ever
   use it through the browser tab, a fortnight's gap could wipe your history.
 
+Because that is the one thing that can actually lose your data, the app reminds
+you. A small panel appears under the add box with a **Show me how** walkthrough,
+but only once there is something to lose (the first item in the basket, or a
+saved shop) and never on an empty first run. **Not now** puts it away for five
+days. It stops for good once you are running from the Home Screen, and the same
+note stays permanently in the Data tab if you want it earlier.
+
 ---
 
 ## Using it
