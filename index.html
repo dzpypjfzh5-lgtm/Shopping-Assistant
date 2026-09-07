@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>Bloom &middot; spend tracker</title>
+<meta name="description" content="A calm, flower-covered running total for shopping trips.">
+<meta name="theme-color" content="#f7e6f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d1030" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bloom">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- a five petal flower, drawn once, reused everywhere -->
+    <symbol id="flower" viewBox="0 0 64 64">
+      <g class="fl-petals">
+        <ellipse cx="32" cy="15" rx="9" ry="13"/>
+        <ellipse cx="32" cy="15" rx="9" ry="13" transform="rotate(72 32 32)"/>
+        <ellipse cx="32" cy="15" rx="9" ry="13" transform="rotate(144 32 32)"/>
+        <ellipse cx="32" cy="15" rx="9" ry="13" transform="rotate(216 32 32)"/>
+        <ellipse cx="32" cy="15" rx="9" ry="13" transform="rotate(288 32 32)"/>
+      </g>
+      <circle class="fl-heart" cx="32" cy="32" r="7.5"/>
+    </symbol>
+    <symbol id="sprig" viewBox="0 0 64 64">
+      <path class="sp-stem" d="M32 62 C32 44 30 30 32 14" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse class="sp-leaf" cx="22" cy="42" rx="9" ry="5" transform="rotate(-25 22 42)"/>
+      <ellipse class="sp-leaf" cx="42" cy="33" rx="9" ry="5" transform="rotate(25 42 33)"/>
+      <circle class="sp-bud" cx="32" cy="12" r="6"/>
+    </symbol>
+  </defs>
+</svg>
+
+<button type="button" class="minibar" id="minibar" hidden>
+  <span class="minibar__label" id="miniLabel">Left</span>
+  <span class="minibar__value" id="miniValue">$0.00</span>
+  <span class="minibar__bar"><span class="minibar__fill" id="miniFill"></span></span>
+</button>
+
+<!-- ======================= SHOP ======================= -->
+<main id="view-shop" class="view" data-view="shop">
+
+  <header class="sky" id="sky" style="--p:0">
+    <div class="sky__layer sky__layer--dawn"></div>
+    <div class="sky__layer sky__layer--noon"></div>
+    <div class="sky__layer sky__layer--dusk"></div>
+    <div class="sky__sun" aria-hidden="true"></div>
+    <div class="sky__hills sky__hills--far" aria-hidden="true">
+      <svg viewBox="0 0 400 90" preserveAspectRatio="none"><path d="M0 90 L0 46 C70 18 120 54 190 38 C260 22 320 50 400 26 L400 90 Z"/></svg>
+    </div>
+    <div class="sky__hills sky__hills--near" aria-hidden="true">
+      <svg viewBox="0 0 400 70" preserveAspectRatio="none"><path d="M0 70 L0 40 C80 20 150 46 230 34 C300 24 340 42 400 30 L400 70 Z"/></svg>
+    </div>
+    <div class="sky__meadow" aria-hidden="true">
+      <svg class="meadow-flower" viewBox="0 0 64 64"><use href="#sprig"/></svg>
+      <svg class="meadow-flower" viewBox="0 0 64 64"><use href="#flower"/></svg>
+      <svg class="meadow-flower" viewBox="0 0 64 64"><use href="#sprig"/></svg>
+      <svg class="meadow-flower" viewBox="0 0 64 64"><use href="#flower"/></svg>
+      <svg class="meadow-flower" viewBox="0 0 64 64"><use href="#sprig"/></svg>
+      <svg class="meadow-flower" viewBox="0 0 64 64"><use href="#flower"/></svg>
+    </div>
+
+    <div class="counter">
+      <p class="counter__label" id="remainingLabel">Left to spend</p>
+      <p class="counter__value" id="remaining" aria-live="polite" aria-atomic="true">$0.00</p>
+      <p class="counter__sub">
+        <span id="spent">$0.00</span> spent of
+        <button type="button" id="budgetBtn" class="linkish" aria-label="Change budget">$300</button>
+      </p>
+      <div class="bar" role="progressbar" id="bar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Budget used">
+        <div class="bar__fill" id="barFill"></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="pad">
+    <form id="addForm" class="add" autocomplete="off">
+      <div class="add__row">
+        <label class="sr-only" for="nameInput">Item</label>
+        <input id="nameInput" class="add__name" type="text" placeholder="chicken" enterkeyhint="next" autocapitalize="none" spellcheck="false">
+        <label class="sr-only" for="priceInput">Price</label>
+        <div class="add__price">
+          <span class="add__cur" id="curSign">$</span>
+          <input id="priceInput" type="text" inputmode="decimal" placeholder="10" enterkeyhint="done">
+        </div>
+        <button class="add__go" type="submit" aria-label="Add item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="add__hint" id="addHint" hidden></p>
+    </form>
+
+
+    <aside class="install" id="installBanner" hidden>
+      <div class="install__row">
+        <svg class="install__flower" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg>
+        <div class="install__text">
+          <p class="install__title">Keep Bloom on your Home Screen</p>
+          <p class="install__body" id="installBody"></p>
+        </div>
+      </div>
+      <ol class="install__steps" id="installSteps" hidden>
+        <li>Tap <strong>Share</strong> at the bottom of Safari: the square with an arrow coming out of it.</li>
+        <li>Scroll down the list and tap <strong>Add to Home Screen</strong>.</li>
+        <li>Tap <strong>Add</strong>. Open Bloom from that icon from now on.</li>
+      </ol>
+      <div class="install__actions">
+        <button type="button" class="btn btn--soft" id="installHowBtn" aria-expanded="false" aria-controls="installSteps">Show me how</button>
+        <button type="button" class="btn btn--ghost" id="installLaterBtn">Not now</button>
+      </div>
+    </aside>
+
+    <div class="listhead">
+      <div class="chips" role="group" aria-label="Sort items">
+        <button type="button" class="chip is-on" data-sort="price-desc">$ high &rarr; low</button>
+        <button type="button" class="chip" data-sort="price-asc">$ low &rarr; high</button>
+        <button type="button" class="chip" data-sort="added">Newest</button>
+        <button type="button" class="chip" data-sort="name">A &ndash; Z</button>
+      </div>
+      <p class="listhead__count" id="itemCount"></p>
+    </div>
+
+    <ul class="items" id="itemList"></ul>
+
+    <div class="empty" id="emptyState">
+      <div class="empty__art" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><use href="#flower"/></svg>
+        <svg viewBox="0 0 64 64"><use href="#sprig"/></svg>
+        <svg viewBox="0 0 64 64"><use href="#flower"/></svg>
+      </div>
+      <p class="empty__title">Nothing in the basket yet</p>
+      <p class="empty__body">Pop in the first thing and watch it find its place.</p>
+    </div>
+
+    <section class="lastshop" id="lastShopPanel" hidden>
+      <button type="button" class="lastshop__toggle" id="lastShopToggle" aria-expanded="false" aria-controls="lastShopBody">
+        <span><svg class="ico" viewBox="0 0 64 64" aria-hidden="true"><use href="#flower"/></svg> Last shop <em id="lastShopMeta"></em></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="lastshop__body" id="lastShopBody" hidden></div>
+    </section>
+
+    <div class="finish" id="finishWrap" hidden>
+      <button type="button" class="btn btn--primary" id="finishBtn">Finish this shop</button>
+      <p class="finish__note">Saves it to History and starts a fresh basket.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ======================= HISTORY ======================= -->
+<main id="view-history" class="view" data-view="history" hidden>
+  <header class="pagehead">
+    <h1>History</h1>
+    <p class="pagehead__sub">Every finished shop, newest first. Tap anything to reuse it.</p>
+  </header>
+  <section class="pad">
+    <div class="statrow" id="statRow" hidden>
+      <div class="stat"><span class="stat__k" id="statLast">–</span><span class="stat__l">Last shop</span></div>
+      <div class="stat"><span class="stat__k" id="statAvg">–</span><span class="stat__l">Average</span></div>
+      <div class="stat"><span class="stat__k" id="statTrips">–</span><span class="stat__l">Shops</span></div>
+    </div>
+    <div id="tripList"></div>
+    <div class="empty" id="historyEmpty">
+      <div class="empty__art" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><use href="#sprig"/></svg>
+        <svg viewBox="0 0 64 64"><use href="#flower"/></svg>
+        <svg viewBox="0 0 64 64"><use href="#sprig"/></svg>
+      </div>
+      <p class="empty__title">No finished shops yet</p>
+      <p class="empty__body">Tap <strong>Finish this shop</strong> when you leave the till and it will live here.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ======================= DATA ======================= -->
+<main id="view-data" class="view" data-view="data" hidden>
+  <header class="pagehead">
+    <h1>Your data</h1>
+    <p class="pagehead__sub">It lives on this phone. Keep a copy somewhere safe.</p>
+  </header>
+  <section class="pad">
+
+    <div class="card">
+      <h2 class="card__h">Budget</h2>
+      <div class="field">
+        <label for="budgetInput">Budget per shop</label>
+        <div class="field__money"><span id="curSign2">$</span><input id="budgetInput" type="text" inputmode="decimal"></div>
+      </div>
+      <div class="field">
+        <label for="currencyInput">Currency symbol</label>
+        <input id="currencyInput" type="text" maxlength="3" class="field__short">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__h">Send a copy somewhere</h2>
+      <p class="card__p">Share opens the iPhone share sheet, so it can go straight into Files, Drive, Notion, Mail or Messages.</p>
+      <div class="btnrow">
+        <button type="button" class="btn" id="shareCsvBtn">Share CSV</button>
+        <button type="button" class="btn" id="downloadCsvBtn">Download CSV</button>
+      </div>
+      <p class="card__p card__p--tight">CSV opens in Excel, Numbers or Google Sheets. The backup file below is the one to keep if you want to restore everything.</p>
+      <div class="btnrow">
+        <button type="button" class="btn" id="shareJsonBtn">Share backup</button>
+        <button type="button" class="btn" id="downloadJsonBtn">Download backup</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__h">Restore a backup</h2>
+      <p class="card__p">Pick a backup file you saved earlier. This replaces what is on the phone now.</p>
+      <div class="btnrow">
+        <label class="btn" for="importFile">Choose backup file</label>
+        <input id="importFile" type="file" accept="application/json,.json" class="sr-only">
+      </div>
+    </div>
+
+    <div class="card" id="storageCard">
+      <h2 class="card__h">Keeping it safe</h2>
+      <p class="card__p" id="storageMsg">Checking storage&hellip;</p>
+      <p class="card__p" id="installMsg" hidden><strong>Add Bloom to your Home Screen.</strong> In Safari tap Share, then <em>Add to Home Screen</em>. Opened that way it works with no signal in the shop, and iOS stops clearing your history.</p>
+    </div>
+
+    <div class="card card--danger">
+      <h2 class="card__h">Start over</h2>
+      <p class="card__p">Deletes the current basket and every saved shop on this device.</p>
+      <button type="button" class="btn btn--danger" id="wipeBtn">Erase everything</button>
+    </div>
+
+  </section>
+</main>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button class="tab is-on" role="tab" aria-selected="true" data-goto="shop">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 10V7a2.5 2.5 0 0 1 5 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span>Shop</span>
+  </button>
+  <button class="tab" role="tab" aria-selected="false" data-goto="history">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>History</span>
+  </button>
+  <button class="tab" role="tab" aria-selected="false" data-goto="data">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="7" rx="7" ry="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 7v10c0 1.8 3.1 3.2 7 3.2s7-1.4 7-3.2V7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 12c0 1.8 3.1 3.2 7 3.2s7-1.4 7-3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+    <span>Data</span>
+  </button>
+</nav>
+
+<!-- edit sheet -->
+<div class="sheet" id="editSheet" hidden>
+  <div class="sheet__scrim" data-close></div>
+  <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <div class="sheet__grab" aria-hidden="true"></div>
+    <h2 id="editTitle">Edit item</h2>
+    <form id="editForm">
+      <div class="field">
+        <label for="editName">Item</label>
+        <input id="editName" type="text" autocapitalize="none">
+      </div>
+      <div class="field">
+        <label for="editPrice">Price</label>
+        <div class="field__money"><span id="curSign3">$</span><input id="editPrice" type="text" inputmode="decimal"></div>
+      </div>
+      <div class="btnrow btnrow--split">
+        <button type="button" class="btn btn--danger" id="editDelete">Remove</button>
+        <button type="submit" class="btn btn--primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span id="toastMsg"></span>
+  <button type="button" id="toastAction" hidden></button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
