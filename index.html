@@ -86,7 +86,8 @@
     <form id="addForm" class="add" autocomplete="off">
       <div class="add__row">
         <label class="sr-only" for="nameInput">Item</label>
-        <input id="nameInput" class="add__name" type="text" placeholder="chicken" enterkeyhint="next" autocapitalize="none" spellcheck="false">
+        <input id="nameInput" class="add__name" type="text" placeholder="chicken" enterkeyhint="next" autocapitalize="none" spellcheck="false"
+               role="combobox" aria-expanded="false" aria-controls="suggestList" aria-autocomplete="list" aria-describedby="suggestNote">
         <label class="sr-only" for="priceInput">Price</label>
         <div class="add__price">
           <span class="add__cur" id="curSign">$</span>
@@ -96,6 +97,8 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         </button>
       </div>
+      <ul class="suggest" id="suggestList" role="listbox" aria-label="Things you have bought before" hidden></ul>
+      <p class="sr-only" id="suggestNote">Past items are offered as you type.</p>
       <p class="add__hint" id="addHint" hidden></p>
     </form>
 
@@ -118,6 +121,28 @@
         <button type="button" class="btn btn--ghost" id="installLaterBtn">Not now</button>
       </div>
     </aside>
+
+    <section class="plan" id="planPanel">
+      <button type="button" class="plan__toggle" id="planToggle" aria-expanded="false" aria-controls="planBody">
+        <span><svg class="ico" viewBox="0 0 64 64" aria-hidden="true"><use href="#sprig"/></svg> Shopping list <em id="planMeta"></em></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="plan__body" id="planBody" hidden>
+        <form class="plan__add" id="planForm" autocomplete="off">
+          <label class="sr-only" for="planName">Add to the shopping list</label>
+          <input id="planName" type="text" placeholder="Something you need" enterkeyhint="done" autocapitalize="none" spellcheck="false">
+          <button class="plan__go" type="submit" aria-label="Put it on the list">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          </button>
+        </form>
+        <ul class="plan__items" id="planItems"></ul>
+        <p class="plan__note" id="planNote" hidden></p>
+        <div class="plan__actions">
+          <button type="button" class="btn btn--soft" id="planFillBtn" hidden>Copy last shop onto the list</button>
+          <button type="button" class="btn btn--ghost" id="planTidyBtn" hidden>Clear the ticked ones</button>
+        </div>
+      </div>
+    </section>
 
     <div class="listhead">
       <div class="chips" role="group" aria-label="Sort items">
@@ -168,6 +193,14 @@
       <div class="stat"><span class="stat__k" id="statAvg">–</span><span class="stat__l">Average</span></div>
       <div class="stat"><span class="stat__k" id="statTrips">–</span><span class="stat__l">Shops</span></div>
     </div>
+    <section class="card saved" id="savedCard" hidden>
+      <h2 class="card__h">Unspent budget</h2>
+      <p class="saved__big"><span id="savedTotal">&ndash;</span></p>
+      <p class="saved__sub" id="savedSub"></p>
+      <div class="spark" id="savedChart"></div>
+      <p class="saved__legend">One column per shop, oldest on the left. Above the line is budget you did not spend.</p>
+    </section>
+
     <div id="tripList"></div>
     <div class="empty" id="historyEmpty">
       <div class="empty__art" aria-hidden="true">
